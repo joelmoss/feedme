@@ -9,7 +9,7 @@
 
 import { IDLE_TIMEOUT_MS, MSG } from '../shared/constants.js';
 import { getSiteAdapter } from './sites/adapter.js';
-import { insertMarkerAfter, removeMarker } from './marker.js';
+import { insertMarkerBefore, removeMarker } from './marker.js';
 
 const adapter = getSiteAdapter();
 if (!adapter) {
@@ -55,7 +55,7 @@ function savePosition(postEl) {
     savedAt: new Date().toISOString(),
   };
 
-  insertMarkerAfter(postEl, position.savedAt);
+  insertMarkerBefore(postEl, position.savedAt);
 
   chrome.runtime.sendMessage({
     type: MSG.SAVE_POSITION,
@@ -76,7 +76,7 @@ async function restorePosition() {
 
     // Wait for the timeline to be populated, then try to find the post
     waitForPost(position.postId, (postEl) => {
-      insertMarkerAfter(postEl, position.savedAt);
+      insertMarkerBefore(postEl, position.savedAt);
       postEl.scrollIntoView({ behavior: 'instant', block: 'start' });
     });
   } catch {

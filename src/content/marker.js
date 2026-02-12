@@ -39,12 +39,12 @@ export function createMarker(savedAt) {
 }
 
 /**
- * Insert the marker after a tweet <article> element.
+ * Insert the marker before a post element.
  */
-export function insertMarkerAfter(tweetEl, savedAt) {
+export function insertMarkerBefore(postEl, savedAt) {
   removeMarker();
   const marker = createMarker(savedAt);
-  tweetEl.parentNode.insertBefore(marker, tweetEl.nextSibling);
+  postEl.parentNode.insertBefore(marker, postEl);
   return marker;
 }
 
