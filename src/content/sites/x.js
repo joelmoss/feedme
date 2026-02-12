@@ -94,6 +94,25 @@ export function findPostById(postId) {
 }
 
 /**
+ * Return an array of post elements above the given element in the feed.
+ */
+export function getPostsAbove(el) {
+  const posts = [];
+  const articles = document.querySelectorAll('article[data-testid="tweet"]');
+
+  for (const article of articles) {
+    // Stop once we reach the reference element or anything after it
+    if (article.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) {
+      posts.push(article);
+    } else {
+      break;
+    }
+  }
+
+  return posts;
+}
+
+/**
  * Check if the current page is a timeline page.
  */
 export function isTimelinePage() {

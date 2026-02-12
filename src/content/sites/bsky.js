@@ -111,6 +111,24 @@ export function findPostById(postId) {
 }
 
 /**
+ * Return an array of post elements above the given element in the feed.
+ */
+export function getPostsAbove(el) {
+  const posts = [];
+  const items = document.querySelectorAll('[data-testid^="feedItem-by-"]');
+
+  for (const item of items) {
+    if (item.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) {
+      posts.push(item);
+    } else {
+      break;
+    }
+  }
+
+  return posts;
+}
+
+/**
  * Check if the current page is a feed/timeline page.
  * Bluesky timelines: / (home), /feeds, custom feeds at /profile/.../feed/...
  */

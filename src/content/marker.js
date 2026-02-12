@@ -33,9 +33,49 @@ export function createMarker(savedAt) {
       <span>You left off here${timeLabel}</span>
       <span style="flex: 1; height: 1px; background: rgba(255,255,255,0.3);"></span>
     </div>
+    <a id="feedme-new-posts" href="#" style="
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      margin: 0 0 4px 0;
+      background: rgba(37, 99, 235, 0.1);
+      border-radius: 0 0 8px 8px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: #2563eb;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s;
+    ">
+      <span>\u2191</span>
+      <span id="feedme-new-posts-label"></span>
+    </a>
   `;
 
   return marker;
+}
+
+/**
+ * Show or hide the "new posts" link on the marker.
+ */
+export function updateNewPostsLink(count, onClick) {
+  const link = document.getElementById('feedme-new-posts');
+  if (!link) return;
+
+  if (count > 0) {
+    const label = count === 1 ? '1 new post above' : `${count} new posts above`;
+    link.querySelector('#feedme-new-posts-label').textContent = label;
+    link.style.display = 'flex';
+    link.onclick = (e) => {
+      e.preventDefault();
+      onClick();
+    };
+  } else {
+    link.style.display = 'none';
+    link.onclick = null;
+  }
 }
 
 /**

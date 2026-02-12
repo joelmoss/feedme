@@ -7,9 +7,9 @@
  * last saved position.
  */
 
-import { IDLE_TIMEOUT_MS, MSG } from '../shared/constants.js';
+import { IDLE_TIMEOUT_MS, MARKER_ID, MSG } from '../shared/constants.js';
 import { getSiteAdapter } from './sites/adapter.js';
-import { insertMarkerBefore, removeMarker } from './marker.js';
+import { insertMarkerBefore, removeMarker, updateNewPostsLink } from './marker.js';
 
 const adapter = getSiteAdapter();
 if (!adapter) {
@@ -18,6 +18,9 @@ if (!adapter) {
 
 let idleTimer = null;
 let currentUrl = location.href;
+let newPostsObserver = null;
+let newPostsDebounce = null;
+let lastNewPostsCount = 0;
 
 // ── Scroll idle detection ──────────────────────────────────────────────────
 
@@ -56,6 +59,7 @@ function savePosition(postEl) {
   };
 
   insertMarkerBefore(postEl, position.savedAt);
+  startNewPostsObserver();
 
   chrome.runtime.sendMessage({
     type: MSG.SAVE_POSITION,
@@ -78,6 +82,7 @@ async function restorePosition() {
     waitForPost(position.postId, (postEl) => {
       insertMarkerBefore(postEl, position.savedAt);
       postEl.scrollIntoView({ behavior: 'instant', block: 'start' });
+      startNewPostsObserver();
     });
   } catch {
     // Extension context may be invalid, ignore
@@ -103,6 +108,73 @@ function waitForPost(postId, callback) {
   }, 500);
 }
 
+// ── New posts detection ──────────────────────────────────────────────────
+
+function startNewPostsObserver() {
+  stopNewPostsObserver();
+  lastNewPostsCount = 0;
+
+  newPostsObserver = new MutationObserver(() => {
+    clearTimeout(newPostsDebounce);
+    newPostsDebounce = setTimeout(checkNewPosts, 500);
+  });
+
+  newPostsObserver.observe(document.body, { childList: true, subtree: true });
+}
+
+function checkNewPosts() {
+  const marker = document.getElementById(MARKER_ID);
+  if (!marker) {
+    stopNewPostsObserver();
+    return;
+  }
+
+  const count = adapter.getPostsAbove(marker).length;
+  if (count !== lastNewPostsCount) {
+    lastNewPostsCount = count;
+    updateNewPostsLink(count, () => loadNewPosts());
+  }
+}
+
+function stopNewPostsObserver() {
+  if (newPostsObserver) {
+    newPostsObserver.disconnect();
+    newPostsObserver = null;
+  }
+  clearTimeout(newPostsDebounce);
+  newPostsDebounce = null;
+  lastNewPostsCount = 0;
+}
+
+/**
+ * "Load" new posts above the marker by removing the marker, scrolling to the
+ * top to trigger the feed to render all new content, then scrolling back to
+ * maintain the user's reading position.
+ */
+function loadNewPosts() {
+  const marker = document.getElementById(MARKER_ID);
+  if (!marker) return;
+
+  stopNewPostsObserver();
+
+  // Find the post just below the marker (the one the marker was placed before)
+  const anchorPost = marker.nextElementSibling;
+  if (!anchorPost) {
+    marker.remove();
+    return;
+  }
+
+  // Remember where the anchor post sits in the viewport before removing the marker
+  const anchorOffsetBefore = anchorPost.getBoundingClientRect().top;
+
+  // Remove the marker
+  marker.remove();
+
+  // Restore scroll so the anchor post stays at the same viewport position
+  const anchorOffsetAfter = anchorPost.getBoundingClientRect().top;
+  window.scrollBy({ top: anchorOffsetAfter - anchorOffsetBefore, behavior: 'instant' });
+}
+
 // ── SPA navigation handling ────────────────────────────────────────────────
 
 function observeUrlChanges() {
@@ -110,6 +182,7 @@ function observeUrlChanges() {
     if (location.href !== currentUrl) {
       currentUrl = location.href;
       clearTimeout(idleTimer);
+      stopNewPostsObserver();
       removeMarker();
 
       if (adapter.isTimelinePage()) {
