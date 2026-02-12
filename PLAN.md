@@ -88,38 +88,36 @@ the saved position.
 feedme/
 ├── manifest.json
 ├── package.json
-├── tsconfig.json
-├── vite.config.ts              # Build config (Vite multi-entry)
+├── vite.config.js              # Build config (Vite multi-entry)
 ├── src/
 │   ├── background/
-│   │   ├── index.ts            # Service worker entry point
-│   │   ├── bluesky-client.ts   # Bluesky AT Protocol API client
-│   │   ├── feed-store.ts       # Feed caching & merge logic
-│   │   └── message-handler.ts  # Handle messages from content/panel
+│   │   ├── index.js            # Service worker entry point
+│   │   ├── bluesky-client.js   # Bluesky AT Protocol API client
+│   │   ├── feed-store.js       # Feed caching & merge logic
+│   │   └── message-handler.js  # Handle messages from content/panel
 │   ├── content/
-│   │   └── x-interceptor.ts    # Content script for x.com XHR interception
+│   │   └── x-interceptor.js    # Content script for x.com XHR interception
 │   ├── panel/
 │   │   ├── index.html          # Side panel HTML shell
-│   │   ├── index.ts            # Panel entry — registers custom elements
+│   │   ├── index.js            # Panel entry — registers custom elements
 │   │   ├── components/
-│   │   │   ├── feed-panel.ts   # <feed-panel> — root element, routing
-│   │   │   ├── feed-list.ts    # <feed-list> — scrollable unified feed
-│   │   │   ├── feed-item.ts    # <feed-item> — single post card
-│   │   │   ├── read-marker.ts  # <read-marker> — "You left off here"
-│   │   │   └── feed-settings.ts # <feed-settings> — auth & preferences
+│   │   │   ├── feed-panel.js   # <feed-panel> — root element, routing
+│   │   │   ├── feed-list.js    # <feed-list> — scrollable unified feed
+│   │   │   ├── feed-item.js    # <feed-item> — single post card
+│   │   │   ├── read-marker.js  # <read-marker> — "You left off here"
+│   │   │   └── feed-settings.js # <feed-settings> — auth & preferences
 │   │   └── styles.css          # Panel styles (or inlined in shadow DOM)
 │   ├── shared/
-│   │   ├── types.ts            # Shared TypeScript types
-│   │   ├── storage.ts          # chrome.storage wrapper
-│   │   └── constants.ts        # Keys, URLs, defaults
+│   │   ├── storage.js          # chrome.storage wrapper
+│   │   └── constants.js        # Keys, URLs, defaults
 │   └── lib/
-│       └── normalizer.ts       # Normalize X/Bsky posts into unified format
+│       └── normalizer.js       # Normalize X/Bsky posts into unified format
 ├── public/
 │   └── icons/                  # Extension icons (16, 48, 128)
 └── tests/
-    ├── normalizer.test.ts
-    ├── feed-store.test.ts
-    └── bluesky-client.test.ts
+    ├── normalizer.test.js
+    ├── feed-store.test.js
+    └── bluesky-client.test.js
 ```
 
 ---
@@ -129,9 +127,8 @@ feedme/
 ### Phase 1: Project Scaffolding
 
 1. **Initialize the project**
-   - `package.json` with TypeScript, Vite, and `@atproto/api` for Bluesky
+   - `package.json` with Vite and `@atproto/api` for Bluesky
      (no framework dependencies — UI is vanilla custom elements)
-   - `tsconfig.json` with strict mode
    - Vite config for building content script, service worker, and panel
      separately (Chrome extensions need separate bundles)
 
@@ -151,7 +148,7 @@ feedme/
 
 ### Phase 2: X.com Feed Capture (Content Script)
 
-4. **Build the XHR/fetch interceptor** (`src/content/x-interceptor.ts`)
+4. **Build the XHR/fetch interceptor** (`src/content/x-interceptor.js`)
    - Inject at `document_start` before X.com's own scripts run
    - Override `window.fetch` to intercept responses from X.com's internal
      GraphQL endpoints:
@@ -162,28 +159,29 @@ feedme/
    - Forward extracted tweets to the service worker via
      `chrome.runtime.sendMessage`
 
-5. **Normalize X.com tweet data** (`src/lib/normalizer.ts`)
-   - Map X.com's internal tweet format to a unified `FeedItem` type:
-     ```ts
-     interface FeedItem {
-       id: string              // "x:<tweetId>" or "bsky:<postUri>"
-       platform: "x" | "bsky"
+5. **Normalize X.com tweet data** (`src/lib/normalizer.js`)
+   - Map X.com's internal tweet format to a unified `FeedItem` shape:
+     ```js
+     // FeedItem shape:
+     {
+       id,              // "x:<tweetId>" or "bsky:<postUri>"
+       platform,        // "x" | "bsky"
        author: {
-         handle: string
-         displayName: string
-         avatarUrl: string
-       }
-       text: string
-       createdAt: Date         // used for chronological merge
-       media?: MediaItem[]
-       repostBy?: string       // if this is a repost/retweet
-       url: string             // link to original post
+         handle,
+         displayName,
+         avatarUrl,
+       },
+       text,
+       createdAt,       // Date — used for chronological merge
+       media,           // array of { type, url, alt } or undefined
+       repostBy,        // string or undefined — if this is a repost/retweet
+       url,             // link to original post
      }
      ```
 
 ### Phase 3: Bluesky Feed Client (Service Worker)
 
-6. **Implement Bluesky authentication** (`src/background/bluesky-client.ts`)
+6. **Implement Bluesky authentication** (`src/background/bluesky-client.js`)
    - `createSession` with handle + app password
    - Store `accessJwt` and `refreshJwt` in `chrome.storage.local`
    - Auto-refresh: use `chrome.alarms` to refresh the token before expiry
@@ -196,7 +194,7 @@ feedme/
 
 ### Phase 4: Feed Merge & Storage
 
-8. **Build the feed store** (`src/background/feed-store.ts`)
+8. **Build the feed store** (`src/background/feed-store.js`)
    - Maintain an in-memory sorted array of `FeedItem` objects, ordered by
      `createdAt` descending
    - Deduplicate by `id`
@@ -206,7 +204,7 @@ feedme/
      feed is available immediately on panel open
    - Periodic Bluesky fetch: use `chrome.alarms` to poll every 2-3 minutes
 
-9. **Build the message handler** (`src/background/message-handler.ts`)
+9. **Build the message handler** (`src/background/message-handler.js`)
    - Handle messages from content script: `X_FEED_DATA` → ingest into store
    - Handle messages from panel: `GET_FEED`, `GET_READ_POSITION`,
      `SET_READ_POSITION`, `GET_SETTINGS`, `SAVE_SETTINGS`,
@@ -215,11 +213,11 @@ feedme/
 ### Phase 5: Side Panel UI
 
 10. **Create the side panel shell** (`src/panel/`)
-    - Plain HTML (`panel/index.html`) that loads `index.ts`
+    - Plain HTML (`panel/index.html`) that loads `index.js`
     - `index.ts` registers all custom elements and inserts `<feed-panel>`
     - Communicates with service worker via `chrome.runtime.sendMessage`
 
-11. **Build `<feed-list>` custom element** (`src/panel/components/feed-list.ts`)
+11. **Build `<feed-list>` custom element** (`src/panel/components/feed-list.js`)
     - Extends `HTMLElement`, uses Shadow DOM for style encapsulation
     - Renders `<feed-item>` elements for each post in the merged feed
     - Each `<feed-item>` shows: platform badge, author avatar+name, post text,
@@ -229,7 +227,7 @@ feedme/
     - DOM recycling: reuse off-screen `<feed-item>` nodes rather than
       creating/destroying — keeps the DOM lightweight with hundreds of posts
 
-12. **Build `<read-marker>` custom element** (`src/panel/components/read-marker.ts`)
+12. **Build `<read-marker>` custom element** (`src/panel/components/read-marker.js`)
     - When the feed loads, insert a visual divider ("You left off here")
       between the last-read post and newer posts
     - Automatically scroll to this element on panel open
@@ -242,7 +240,7 @@ feedme/
     - On panel open: retrieve saved position, find the corresponding item in
       the feed, scroll to it
 
-14. **Build `<feed-settings>` custom element** (`src/panel/components/feed-settings.ts`)
+14. **Build `<feed-settings>` custom element** (`src/panel/components/feed-settings.js`)
     - Bluesky login form (handle + app password)
     - Connection status indicators for both platforms
     - X.com: show status (requires x.com tab open to capture feed)
@@ -275,13 +273,13 @@ feedme/
 
 | Concern             | Choice                          | Rationale                                                    |
 |---------------------|---------------------------------|--------------------------------------------------------------|
-| Language            | TypeScript                      | Type safety across content script, worker, and UI            |
-| Build tool          | Vite + manual multi-entry       | Fast builds, good TS support, flexible output config         |
+| Language            | Plain JavaScript (ES modules)   | No build-time type compilation, simpler toolchain            |
+| Build tool          | Vite + manual multi-entry       | Fast builds, good JS/module support, flexible output config  |
 | UI                  | Vanilla JS + Custom Elements    | Zero dependencies, Shadow DOM encapsulation, native platform |
 | Bluesky SDK         | `@atproto/api`                  | Official SDK, handles session management                     |
 | List performance    | DOM recycling + IntersectionObserver | No library needed; reuse off-screen nodes manually       |
 | Storage             | `chrome.storage.local`          | Persistent, accessible from all extension contexts           |
-| Testing             | Vitest                          | Fast, native TS support, works with Vite                     |
+| Testing             | Vitest                          | Fast, works with Vite out of the box                         |
 
 ---
 
