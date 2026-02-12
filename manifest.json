@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
   "name": "FeedMe",
-  "version": "0.1.0",
-  "description": "Remembers where you stopped reading on X.com",
+  "version": "0.2.0",
+  "description": "Remembers where you stopped reading on X.com and Bluesky",
   "permissions": ["storage", "sidePanel", "activeTab"],
-  "host_permissions": ["https://x.com/*"],
+  "host_permissions": ["https://x.com/*", "https://bsky.app/*"],
   "background": {
     "service_worker": "background.js",
     "type": "module"
@@ -12,6 +12,11 @@
   "content_scripts": [
     {
       "matches": ["https://x.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://bsky.app/*"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }

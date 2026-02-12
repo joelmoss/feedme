@@ -79,6 +79,15 @@ section {
   background: var(--bg-card-hover);
 }
 
+.card .site-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
 .card .author {
   font-weight: 600;
   font-size: 14px;

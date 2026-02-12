@@ -1,8 +1,13 @@
-// Storage keys
-export const STORAGE_KEYS = {
-  POSITION: 'feedme:position',
-  HISTORY: 'feedme:history',
-};
+// Per-site storage key helpers
+export function storageKeyPosition(site) {
+  return `feedme:${site}:position`;
+}
+
+export function storageKeyHistory(site) {
+  return `feedme:${site}:history`;
+}
+
+export const SITES = ['x', 'bsky'];
 
 // Message types
 export const MSG = {

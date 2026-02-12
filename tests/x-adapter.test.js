@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { getTopVisibleTweet, getTweetInfo, findTweetById } from '../src/content/tweet-finder.js';
+import { getTopVisiblePost, getPostInfo, findPostById, isTimelinePage } from '../src/content/sites/x.js';
 
 function createTweetArticle(username, tweetId, text, rect = {}) {
   const article = document.createElement('article');
@@ -25,7 +25,6 @@ function createTweetArticle(username, tweetId, text, rect = {}) {
   tweetText.textContent = text;
   article.appendChild(tweetText);
 
-  // Mock getBoundingClientRect
   article.getBoundingClientRect = () => ({
     top: rect.top ?? 0,
     bottom: rect.bottom ?? 100,
@@ -38,13 +37,13 @@ function createTweetArticle(username, tweetId, text, rect = {}) {
   return article;
 }
 
-describe('getTweetInfo', () => {
-  it('extracts tweet info from an article element', () => {
+describe('X.com adapter: getPostInfo', () => {
+  it('extracts post info from an article element', () => {
     const article = createTweetArticle('alice', '12345', 'Hello world!');
-    const info = getTweetInfo(article);
+    const info = getPostInfo(article);
 
     expect(info).toEqual({
-      tweetId: '12345',
+      postId: '12345',
       author: '@alice',
       displayName: 'Alice',
       textPreview: 'Hello world!',
@@ -55,49 +54,46 @@ describe('getTweetInfo', () => {
   it('truncates long text to 100 chars', () => {
     const longText = 'A'.repeat(150);
     const article = createTweetArticle('bob', '99999', longText);
-    const info = getTweetInfo(article);
+    const info = getPostInfo(article);
 
     expect(info.textPreview).toBe('A'.repeat(100) + '...');
   });
 
   it('returns null for null input', () => {
-    expect(getTweetInfo(null)).toBeNull();
+    expect(getPostInfo(null)).toBeNull();
   });
 
   it('returns null for article without permalink', () => {
     const article = document.createElement('article');
     article.setAttribute('data-testid', 'tweet');
-    expect(getTweetInfo(article)).toBeNull();
+    expect(getPostInfo(article)).toBeNull();
   });
 });
 
-describe('getTopVisibleTweet', () => {
+describe('X.com adapter: getTopVisiblePost', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
 
   it('returns the first article visible in viewport', () => {
-    // Article above viewport
     const offscreen = createTweetArticle('a', '1', 'off', { top: -200, bottom: -100 });
-    // Article in viewport
     const visible = createTweetArticle('b', '2', 'visible', { top: 50, bottom: 200 });
 
     document.body.appendChild(offscreen);
     document.body.appendChild(visible);
 
-    // Mock window.innerHeight
     Object.defineProperty(window, 'innerHeight', { value: 800, writable: true });
 
-    const result = getTopVisibleTweet();
+    const result = getTopVisiblePost();
     expect(result).toBe(visible);
   });
 
   it('returns null when no tweets exist', () => {
-    expect(getTopVisibleTweet()).toBeNull();
+    expect(getTopVisiblePost()).toBeNull();
   });
 });
 
-describe('findTweetById', () => {
+describe('X.com adapter: findPostById', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
@@ -106,15 +102,15 @@ describe('findTweetById', () => {
     const tweet = createTweetArticle('charlie', '55555', 'Find me');
     document.body.appendChild(tweet);
 
-    const found = findTweetById('55555');
+    const found = findPostById('55555');
     expect(found).toBe(tweet);
   });
 
   it('returns null for non-existent ID', () => {
-    expect(findTweetById('99999')).toBeNull();
+    expect(findPostById('99999')).toBeNull();
   });
 
   it('returns null for null ID', () => {
-    expect(findTweetById(null)).toBeNull();
+    expect(findPostById(null)).toBeNull();
   });
 });
