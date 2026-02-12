@@ -89,7 +89,7 @@ feedme/
 ├── manifest.json
 ├── package.json
 ├── tsconfig.json
-├── vite.config.ts              # Build config (Vite + CRXJS or manual)
+├── vite.config.ts              # Build config (Vite multi-entry)
 ├── src/
 │   ├── background/
 │   │   ├── index.ts            # Service worker entry point
@@ -100,16 +100,14 @@ feedme/
 │   │   └── x-interceptor.ts    # Content script for x.com XHR interception
 │   ├── panel/
 │   │   ├── index.html          # Side panel HTML shell
-│   │   ├── index.ts            # Panel entry point
-│   │   ├── App.tsx             # Root React component
+│   │   ├── index.ts            # Panel entry — registers custom elements
 │   │   ├── components/
-│   │   │   ├── Feed.tsx        # Unified feed list
-│   │   │   ├── FeedItem.tsx    # Single post card
-│   │   │   ├── ReadMarker.tsx  # "You left off here" divider
-│   │   │   └── Settings.tsx    # Auth config & preferences
-│   │   └── hooks/
-│   │       ├── useFeed.ts      # Feed data hook
-│   │       └── useReadPosition.ts  # Scroll position tracking
+│   │   │   ├── feed-panel.ts   # <feed-panel> — root element, routing
+│   │   │   ├── feed-list.ts    # <feed-list> — scrollable unified feed
+│   │   │   ├── feed-item.ts    # <feed-item> — single post card
+│   │   │   ├── read-marker.ts  # <read-marker> — "You left off here"
+│   │   │   └── feed-settings.ts # <feed-settings> — auth & preferences
+│   │   └── styles.css          # Panel styles (or inlined in shadow DOM)
 │   ├── shared/
 │   │   ├── types.ts            # Shared TypeScript types
 │   │   ├── storage.ts          # chrome.storage wrapper
@@ -131,8 +129,8 @@ feedme/
 ### Phase 1: Project Scaffolding
 
 1. **Initialize the project**
-   - `package.json` with TypeScript, Vite, React, and `@anthropic-ai/sdk` (if
-     needed) or `@atproto/api` for Bluesky
+   - `package.json` with TypeScript, Vite, and `@atproto/api` for Bluesky
+     (no framework dependencies — UI is vanilla custom elements)
    - `tsconfig.json` with strict mode
    - Vite config for building content script, service worker, and panel
      separately (Chrome extensions need separate bundles)
@@ -217,31 +215,34 @@ feedme/
 ### Phase 5: Side Panel UI
 
 10. **Create the side panel shell** (`src/panel/`)
-    - React app rendered in `panel/index.html`
+    - Plain HTML (`panel/index.html`) that loads `index.ts`
+    - `index.ts` registers all custom elements and inserts `<feed-panel>`
     - Communicates with service worker via `chrome.runtime.sendMessage`
 
-11. **Build the Feed component** (`src/panel/components/Feed.tsx`)
-    - Virtualized list (use `react-window` or similar) for performance with
-      hundreds of posts
-    - Each `FeedItem` shows: platform badge, author avatar+name, post text,
+11. **Build `<feed-list>` custom element** (`src/panel/components/feed-list.ts`)
+    - Extends `HTMLElement`, uses Shadow DOM for style encapsulation
+    - Renders `<feed-item>` elements for each post in the merged feed
+    - Each `<feed-item>` shows: platform badge, author avatar+name, post text,
       media thumbnails, timestamp, link to original
-    - Infinite scroll: request older items from the store as the user scrolls
-      down
+    - Infinite scroll: `IntersectionObserver` on a sentinel element at the
+      bottom triggers loading older items from the store
+    - DOM recycling: reuse off-screen `<feed-item>` nodes rather than
+      creating/destroying — keeps the DOM lightweight with hundreds of posts
 
-12. **Build the ReadMarker component** (`src/panel/components/ReadMarker.tsx`)
+12. **Build `<read-marker>` custom element** (`src/panel/components/read-marker.ts`)
     - When the feed loads, insert a visual divider ("You left off here")
       between the last-read post and newer posts
-    - Automatically scroll to this divider on panel open
+    - Automatically scroll to this element on panel open
 
-13. **Implement read position tracking** (`src/panel/hooks/useReadPosition.ts`)
-    - Use `IntersectionObserver` on feed items to detect which post is at the
-      top of the viewport
+13. **Implement read position tracking** (inside `<feed-list>`)
+    - Use `IntersectionObserver` on `<feed-item>` elements to detect which
+      post is at the top of the viewport
     - Debounce (500ms) and save the topmost visible post ID to storage via
       `chrome.runtime.sendMessage({ type: 'SET_READ_POSITION', id })`
     - On panel open: retrieve saved position, find the corresponding item in
       the feed, scroll to it
 
-14. **Build the Settings page** (`src/panel/components/Settings.tsx`)
+14. **Build `<feed-settings>` custom element** (`src/panel/components/feed-settings.ts`)
     - Bluesky login form (handle + app password)
     - Connection status indicators for both platforms
     - X.com: show status (requires x.com tab open to capture feed)
@@ -275,10 +276,10 @@ feedme/
 | Concern             | Choice                          | Rationale                                                    |
 |---------------------|---------------------------------|--------------------------------------------------------------|
 | Language            | TypeScript                      | Type safety across content script, worker, and UI            |
-| Build tool          | Vite + manual multi-entry       | Fast builds, good TS/React support, flexible output config   |
-| UI framework        | React                           | Component model fits feed list UI; large ecosystem           |
+| Build tool          | Vite + manual multi-entry       | Fast builds, good TS support, flexible output config         |
+| UI                  | Vanilla JS + Custom Elements    | Zero dependencies, Shadow DOM encapsulation, native platform |
 | Bluesky SDK         | `@atproto/api`                  | Official SDK, handles session management                     |
-| List virtualization | `react-window`                  | Lightweight, handles large lists efficiently                 |
+| List performance    | DOM recycling + IntersectionObserver | No library needed; reuse off-screen nodes manually       |
 | Storage             | `chrome.storage.local`          | Persistent, accessible from all extension contexts           |
 | Testing             | Vitest                          | Fast, native TS support, works with Vite                     |
 
