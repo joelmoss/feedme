@@ -2,7 +2,7 @@
  * Side panel logic — renders current positions and history across sites.
  */
 
-import { MSG, SITES } from '../shared/constants.js';
+import { MSG } from '../shared/constants.js';
 
 const currentList = document.getElementById('current-list');
 const historyList = document.getElementById('history-list');
@@ -12,6 +12,8 @@ const SITE_LABELS = {
   x: 'X.com',
   bsky: 'Bluesky',
 };
+
+let activeSite = null;
 
 // ── Init ───────────────────────────────────────────────────────────────────
 
@@ -25,19 +27,27 @@ chrome.runtime.onMessage.addListener((msg) => {
 });
 
 clearBtn.addEventListener('click', async () => {
-  await chrome.runtime.sendMessage({ type: MSG.CLEAR_HISTORY });
+  await chrome.runtime.sendMessage({ type: MSG.CLEAR_HISTORY, site: activeSite });
   loadData();
 });
 
 // ── Data loading ───────────────────────────────────────────────────────────
 
 async function loadData() {
+  const siteRes = await chrome.runtime.sendMessage({ type: MSG.GET_ACTIVE_SITE });
+  activeSite = siteRes?.site ?? null;
+
   const [posRes, histRes] = await Promise.all([
-    chrome.runtime.sendMessage({ type: MSG.GET_POSITION }),
-    chrome.runtime.sendMessage({ type: MSG.GET_HISTORY }),
+    chrome.runtime.sendMessage({ type: MSG.GET_POSITION, site: activeSite }),
+    chrome.runtime.sendMessage({ type: MSG.GET_HISTORY, site: activeSite }),
   ]);
 
-  renderCurrentPositions(posRes?.positions ?? {});
+  if (activeSite) {
+    const pos = posRes?.position;
+    renderCurrentPositions(pos ? { [activeSite]: pos } : {});
+  } else {
+    renderCurrentPositions(posRes?.positions ?? {});
+  }
   renderHistory(histRes?.history ?? []);
 }
 

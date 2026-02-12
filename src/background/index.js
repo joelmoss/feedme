@@ -116,6 +116,14 @@ async function handleMessage(message) {
       return { ok: true };
     }
 
+    case MSG.GET_ACTIVE_SITE: {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const url = tabs[0]?.url ?? '';
+      if (url.startsWith('https://x.com')) return { site: 'x' };
+      if (url.startsWith('https://bsky.app')) return { site: 'bsky' };
+      return { site: null };
+    }
+
     default:
       return { error: 'Unknown message type' };
   }
