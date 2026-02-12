@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     root: resolve(__dirname),
     include: ['tests/**/*.test.js'],
+    environment: 'jsdom',
   },
   resolve: {
     alias: {

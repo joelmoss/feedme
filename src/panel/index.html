@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FeedMe</title>
+  <link rel="stylesheet" href="./panel.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>FeedMe</h1>
+    </header>
+
+    <section id="current-section">
+      <h2>Current Position</h2>
+      <div id="current-card" class="card empty-state">
+        <p>No position saved yet.</p>
+        <p class="hint">Browse x.com and stop scrolling for 1 minute to save your place.</p>
+      </div>
+    </section>
+
+    <section id="history-section">
+      <div class="section-header">
+        <h2>History</h2>
+        <button id="clear-btn" class="btn-clear hidden">Clear</button>
+      </div>
+      <div id="history-list">
+        <p class="empty-state">No history yet.</p>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="./panel.js"></script>
+</body>
+</html>

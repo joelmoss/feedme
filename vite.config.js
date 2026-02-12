@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import { cpSync, mkdirSync, existsSync, rmSync } from 'fs';
 
-function copyManifestAndFixHtml() {
+function copyExtensionFiles() {
   return {
     name: 'copy-extension-files',
     closeBundle() {
@@ -10,15 +10,15 @@ function copyManifestAndFixHtml() {
 
       // Move index.html → panel/index.html
       const srcHtml = resolve(dist, 'index.html');
-      const destDir = resolve(dist, 'panel');
-      const destHtml = resolve(destDir, 'index.html');
+      const panelDir = resolve(dist, 'panel');
+      const destHtml = resolve(panelDir, 'index.html');
       if (existsSync(srcHtml)) {
-        if (!existsSync(destDir)) mkdirSync(destDir, { recursive: true });
+        if (!existsSync(panelDir)) mkdirSync(panelDir, { recursive: true });
         cpSync(srcHtml, destHtml);
         rmSync(srcHtml);
       }
 
-      // Copy manifest.json into dist
+      // Copy manifest.json
       cpSync(resolve(__dirname, 'manifest.json'), resolve(dist, 'manifest.json'));
 
       // Copy icons if they exist
@@ -38,12 +38,12 @@ export default defineConfig({
     rollupOptions: {
       input: {
         background: resolve(__dirname, 'src/background/index.js'),
-        content: resolve(__dirname, 'src/content/x-interceptor.js'),
+        content: resolve(__dirname, 'src/content/scroll-tracker.js'),
         panel: resolve(__dirname, 'src/panel/index.html'),
       },
       output: {
         entryFileNames: (chunk) => {
-          if (chunk.name === 'panel') return 'panel/index.js';
+          if (chunk.name === 'panel') return 'panel/panel.js';
           return '[name].js';
         },
         chunkFileNames: 'chunks/[name]-[hash].js',
@@ -61,5 +61,5 @@ export default defineConfig({
       '@': resolve(__dirname, 'src'),
     },
   },
-  plugins: [copyManifestAndFixHtml()],
+  plugins: [copyExtensionFiles()],
 });
