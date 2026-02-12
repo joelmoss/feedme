@@ -20,8 +20,8 @@ A Chrome extension that remembers where you stopped reading on X.com. When you s
 ## Setup
 
 ```
-npm install
-npm run build
+pnpm install
+pnpm run build
 ```
 
 Load the extension in Chrome:
