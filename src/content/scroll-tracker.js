@@ -2,7 +2,7 @@
  * Content script entry point.
  *
  * Tracks scroll idle on social feeds (x.com, bsky.app). When the user stops
- * scrolling for 1 minute, places a visual marker below the topmost visible
+ * scrolling for 30 seconds, places a visual marker below the topmost visible
  * post and saves the position. On page load, restores the marker from the
  * last saved position.
  */

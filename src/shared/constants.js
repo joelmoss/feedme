@@ -20,6 +20,6 @@ export const MSG = {
 };
 
 // Config
-export const IDLE_TIMEOUT_MS = 60_000; // 1 minute
+export const IDLE_TIMEOUT_MS = 30_000; // 30 seconds
 export const MAX_HISTORY = 50;
 export const MARKER_ID = 'feedme-marker';

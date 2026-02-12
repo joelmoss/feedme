@@ -50,7 +50,7 @@ function renderCurrentPositions(positions) {
     currentList.innerHTML = `
       <div class="card empty-state">
         <p>No position saved yet.</p>
-        <p class="hint">Browse X.com or Bluesky and stop scrolling for 1 minute to save your place.</p>
+        <p class="hint">Browse X.com or Bluesky and stop scrolling for 30 seconds to save your place.</p>
       </div>
     `;
     return;
