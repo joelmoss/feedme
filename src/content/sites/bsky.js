@@ -89,6 +89,13 @@ export function getPostInfo(itemEl) {
 }
 
 /**
+ * Find the feed item ancestor of a clicked element.
+ */
+export function getPostElement(el) {
+  return el?.closest('[data-testid^="feedItem-by-"]') ?? null;
+}
+
+/**
  * Find a post in the DOM by its rkey.
  */
 export function findPostById(postId) {

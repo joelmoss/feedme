@@ -23,6 +23,7 @@ let currentUrl = location.href;
 
 function startTracking() {
   window.addEventListener('scroll', onScroll, { passive: true });
+  document.addEventListener('click', onClick, { capture: true });
   observeUrlChanges();
   restorePosition();
 }
@@ -35,7 +36,16 @@ function onScroll() {
 async function onScrollIdle() {
   const postEl = adapter.getTopVisiblePost();
   if (!postEl) return;
+  savePosition(postEl);
+}
 
+function onClick(e) {
+  const postEl = adapter.getPostElement(e.target);
+  if (!postEl) return;
+  savePosition(postEl);
+}
+
+function savePosition(postEl) {
   const info = adapter.getPostInfo(postEl);
   if (!info) return;
 
@@ -47,7 +57,6 @@ async function onScrollIdle() {
 
   insertMarkerAfter(postEl, position.savedAt);
 
-  // Save via background worker
   chrome.runtime.sendMessage({
     type: MSG.SAVE_POSITION,
     position,

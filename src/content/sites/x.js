@@ -72,6 +72,13 @@ export function getPostInfo(articleEl) {
 }
 
 /**
+ * Find the tweet article ancestor of a clicked element.
+ */
+export function getPostElement(el) {
+  return el?.closest('article[data-testid="tweet"]') ?? null;
+}
+
+/**
  * Find a tweet in the DOM by its status ID.
  */
 export function findPostById(postId) {
