@@ -129,6 +129,13 @@ export function getPostsAbove(el) {
 }
 
 /**
+ * Check if an element is Bluesky's native "Load new posts" button.
+ */
+export function isShowNewPostsButton(el) {
+  return !!el?.closest('[data-testid="loadLatestBtn"]');
+}
+
+/**
  * Check if the current page is a feed/timeline page.
  * Bluesky timelines: / (home), /feeds, custom feeds at /profile/.../feed/...
  */

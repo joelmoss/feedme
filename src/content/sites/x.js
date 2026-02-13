@@ -113,6 +113,22 @@ export function getPostsAbove(el) {
 }
 
 /**
+ * Check if an element is X.com's native "Show N posts" button that appears
+ * at the top of the timeline when new posts are available.
+ */
+export function isShowNewPostsButton(el) {
+  // The button is a non-tweet cell in the timeline with text like "Show 5 posts"
+  const cell = el?.closest('[data-testid="cellInnerDiv"]');
+  if (!cell) return false;
+
+  // It should NOT contain a tweet article
+  if (cell.querySelector('article[data-testid="tweet"]')) return false;
+
+  const text = cell.textContent?.trim() ?? '';
+  return /show\s+\d*\s*post/i.test(text);
+}
+
+/**
  * Check if the current page is a timeline page.
  */
 export function isTimelinePage() {

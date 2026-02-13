@@ -43,6 +43,12 @@ async function onScrollIdle() {
 }
 
 function onClick(e) {
+  // Check if the user clicked X.com's native "Show N posts" button
+  if (adapter.isShowNewPostsButton?.(e.target)) {
+    scrollToMarkerAfterLoad();
+    return;
+  }
+
   const postEl = adapter.getPostElement(e.target);
   if (!postEl) return;
   savePosition(postEl);
@@ -106,6 +112,31 @@ function waitForPost(postId, callback) {
       clearInterval(interval);
     }
   }, 500);
+}
+
+// ── Scroll to marker after native "Show N posts" loads ──────────────────
+
+/**
+ * After the user clicks X.com's native "Show N posts" button, the page loads
+ * new posts and scrolls to the top. Poll for the marker to be present in the
+ * DOM (it may get re-rendered), then scroll it into view.
+ */
+function scrollToMarkerAfterLoad() {
+  const deadline = Date.now() + 5_000;
+  const interval = setInterval(() => {
+    const marker = document.getElementById(MARKER_ID);
+    if (marker) {
+      clearInterval(interval);
+      // Wait a tick for the DOM to settle after new posts are inserted
+      requestAnimationFrame(() => {
+        marker.scrollIntoView({ behavior: 'instant', block: 'start' });
+      });
+      return;
+    }
+    if (Date.now() > deadline) {
+      clearInterval(interval);
+    }
+  }, 200);
 }
 
 // ── New posts detection ──────────────────────────────────────────────────
